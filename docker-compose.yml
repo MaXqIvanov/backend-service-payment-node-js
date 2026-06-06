@@ -6,9 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '3000:3000'
+      - '3020:3020'
     environment:
-      - PORT=3000
+      - PORT=3020
       - MONGO_URI=mongodb://mongodb:27017/payments
       - REDIS_URL=redis://redis:6379
       - WEBHOOK_SECRET=super_secret_key@@@@
