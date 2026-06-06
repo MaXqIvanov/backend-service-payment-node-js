@@ -17,4 +17,4 @@ RUN yarn install --frozen-lockfile --production
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3020
-CMD ["node", "dist/src/server.js"]
+CMD ["node", "dist/server.js"]
