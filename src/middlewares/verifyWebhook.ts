@@ -31,9 +31,14 @@ export const verifyWebhook = async (req: Request, res: Response, next: NextFunct
 		}
 
 		const nonceKey = `nonce:${nonce}`;
-		const isNonceUsed = await redisClient.get(nonceKey);
+		const ttlSeconds = Math.ceil(TIMESTAMP_WINDOW_MS / 1000);
 
-		if (isNonceUsed) {
+		const acquired = await redisClient.set(nonceKey, '1', {
+			NX: true,
+			EX: ttlSeconds
+		});
+
+		if (!acquired) {
 			res.status(400).json({ error: 'Duplicate request (Nonce already used)' });
 			return;
 		}
@@ -42,11 +47,11 @@ export const verifyWebhook = async (req: Request, res: Response, next: NextFunct
 		const computedSignature = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex');
 
 		if (signature !== computedSignature) {
+			await redisClient.del(nonceKey);
+
 			res.status(401).json({ error: 'Invalid signature' });
 			return;
 		}
-		const ttlSeconds = Math.ceil(TIMESTAMP_WINDOW_MS / 1000);
-		await redisClient.setEx(nonceKey, ttlSeconds, '1');
 
 		next();
 	} catch (error) {
